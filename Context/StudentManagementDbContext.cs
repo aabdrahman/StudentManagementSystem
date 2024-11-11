@@ -8,7 +8,6 @@ namespace StudentManagementApplication.Context;
 public class StudentManagementDbContext : DbContext
 {   
     private readonly DbSettings _dbSettings;
-    private readonly string connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=StudentManagement;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False";
 
     public StudentManagementDbContext(IOptions<DbSettings> dbSettings, DbContextOptions<StudentManagementDbContext> options) : base(options)
     {

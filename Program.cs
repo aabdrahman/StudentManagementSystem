@@ -69,12 +69,17 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+
+await app.UpdateMigration();
+
+app.UseExceptionHandler();
+
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-await app.UpdateMigration();
+
 
 app.MapControllers();
 
