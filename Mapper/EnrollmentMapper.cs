@@ -20,7 +20,8 @@ public static class EnrollmentMapper
         return new Enrollment()
         { 
             StudentId = UpdatedEnrollment.StudentId,
-            CourseId = UpdatedEnrollment.CourseId
+            CourseId = UpdatedEnrollment.CourseId,
+            Score = UpdatedEnrollment?.Score
         };
     }
 

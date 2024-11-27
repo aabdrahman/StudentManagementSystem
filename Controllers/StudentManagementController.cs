@@ -199,6 +199,7 @@ public class StudentManagementController : ControllerBase
         }
     }
 
+    [Authorize]
     [HttpPut("/UpdateCourse")]
     public async Task<ActionResult> UpdateCourse(UpdateCourseDto NewCourse)
     {
@@ -276,7 +277,7 @@ public class StudentManagementController : ControllerBase
         }
     }
 
-    [Authorize]
+    //[Authorize]
     [HttpPost("/LoginStudent")]
     public async Task<ActionResult> LoginStudent(LoginStudentDto loginStudentDto)
     {
@@ -319,6 +320,7 @@ public class StudentManagementController : ControllerBase
             return Ok(CreateResponse.CreateUnsuccessfulResponse("99", "An Error Occurred Registering Student", ex.GetType().ToString(), ex.GetType().FullName));
         }
     }
+    [Authorize]
     [HttpPost("/EnrollCourse")]
     public async Task<ActionResult> EnrollCourse(CreateEnrollmentDto NewEnrollment)
     {
@@ -334,6 +336,7 @@ public class StudentManagementController : ControllerBase
         }
     }
 
+    //[Authorize]
     [HttpPut("/UpdateEnrollment")]
     public async Task<ActionResult> UpdateEnrollment(UpdateEnrollmentDto UpdateEnrollment)
     {
@@ -348,6 +351,7 @@ public class StudentManagementController : ControllerBase
         }
     }
 
+    [Authorize]
     [HttpGet("/GetStudentEnrollments/{Id}")]
     public async Task<ActionResult> GetStudentEnrollments(int Id)
     {
@@ -360,5 +364,25 @@ public class StudentManagementController : ControllerBase
         {
             return Ok(CreateResponse.CreateUnsuccessfulResponse("99", "An Error Occurred Registering Student", ex.GetType().ToString(), ex.GetType().FullName));
         }
+    }
+
+    //[Authorize]
+    [HttpPost("/UpdateEnrollmentCourse")]
+    public async Task<ActionResult> UpdateEnrollmentScore(UpdateEnrollmentScoreDto UpdateEnrollmentScore)
+    {
+        try
+        {
+            var response = _studentManagementService.UpdateEnrollmentScore(UpdateEnrollmentScore);
+            return Ok(response);
+        }
+        catch(DbUpdateException ex)
+        {
+            return Ok(CreateResponse.CreateUnsuccessfulResponse("99", "An Error Occurred Registering Student", ex.GetType().ToString(), ex.GetType().FullName));
+        }
+        catch (Exception ex)
+        {
+            return Ok(CreateResponse.CreateUnsuccessfulResponse("99", "An Error Occurred Registering Student", ex.GetType().ToString(), ex.GetType().FullName));
+        }
+
     }
 }

@@ -36,5 +36,6 @@ public interface IStudentManagementService
     Task<Response> EnrollCourse(CreateEnrollmentDto NewEnrollment);
     Task<Response> UpdateEnrollment(UpdateEnrollmentDto NewEnrollment);
     Task<Response> GetStudentEnrollments(int StudentId);
+    Task<Response> UpdateEnrollmentScore(UpdateEnrollmentScoreDto studentEnrollmentScore);
     
 }

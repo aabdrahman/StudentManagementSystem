@@ -25,7 +25,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.ConfigureAuth();
-builder.Services.AddAuthorization();
+builder.Services.AddScoped<TokenProvider>();
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -35,16 +36,18 @@ builder.Services.AddAuthentication(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters()
     {
+        ValidIssuer = builder.Configuration["JwT:Issuer"],
+        ValidAudience = builder.Configuration["JwT:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwT:Secrets"]!)),
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["JwT:Issuer"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwT:Secrets"]!)),
-        ValidAudience = builder.Configuration["JwT:Audience"]
+        ValidateIssuerSigningKey = true
     };
 
 });
+
+builder.Services.AddAuthorization();
 
 builder.Services.Configure<DbSettings>(builder.Configuration.GetSection("DatabaseConnection"));
 //Add Application DbContext
@@ -76,8 +79,11 @@ app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 
+
 app.UseAuthentication();
 app.UseAuthorization();
+
+
 
 
 

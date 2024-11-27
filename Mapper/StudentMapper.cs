@@ -48,7 +48,8 @@ public static class StudentMapper
             MatricNumber: student.MatricNumber,
             Email: student.Email,
             Department: student.department?.Name,
-            Faculty: student.department?.faculty?.Name
+            Faculty: student.department?.faculty?.Name,
+            Enrollments: student.StudentEnrollments.Select(x => x.ToEnrollmentDetails()).ToList()
         );
     }
 }

@@ -31,6 +31,16 @@ public class GlobalExceptionHandler : IExceptionHandler
                 problemDetails.Title = exception.GetType().Name;
                 problemDetails.Status = StatusCodes.Status401Unauthorized;
                 break;
+            case ObjectDisposedException:
+                problemDetails.Detail = exception.Message;
+                problemDetails.Title = exception.GetType().Name;
+                problemDetails.Status = StatusCodes.Status200OK;
+                break;
+            case InvalidOperationException:
+                problemDetails.Detail = exception.Message;
+                problemDetails.Title = exception.GetType().Name;
+                problemDetails.Status = StatusCodes.Status200OK;
+                break;
             default:
                 problemDetails.Detail = "Internal Server Error";
                 problemDetails.Status = StatusCodes.Status500InternalServerError;

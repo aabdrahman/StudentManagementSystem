@@ -9,6 +9,7 @@ using StudentManagementApplication.Contracts.Faculty;
 using StudentManagementApplication.Contracts.Student;
 using StudentManagementApplication.Interfaces;
 using StudentManagementApplication.Mapper;
+using StudentManagementApplication.Middleware;
 using StudentManagementApplication.Models;
 
 namespace StudentManagementApplication.Services;
@@ -18,12 +19,16 @@ public class StudentManagementService : IStudentManagementService
     private readonly StudentManagementDbContext _context;
     private readonly ILogger<StudentManagementService> _logger;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly TokenProvider _tokenProvider;
+    private readonly IServiceProvider _serviceProvider;
 
-    public StudentManagementService(StudentManagementDbContext context, ILogger<StudentManagementService> logger, IPasswordHasher passwordHasher)
+    public StudentManagementService(StudentManagementDbContext context, ILogger<StudentManagementService> logger, IPasswordHasher passwordHasher, TokenProvider tokenProvider, IServiceProvider serviceProvider)
     {
         _context = context;
         _logger = logger;
         _passwordHasher = passwordHasher;
+        _tokenProvider = tokenProvider;
+        _serviceProvider = serviceProvider;
     }
 
     public async Task<Response> CreateCourse(CreateCourseDto NewCourse)
@@ -426,10 +431,12 @@ public class StudentManagementService : IStudentManagementService
     }
 
     public async Task<Response> LoginStudent(LoginStudentDto student)
+    
     {
         var StudentToLogin = await _context.Students
                                             .Include(s => s.department)
                                                 .ThenInclude(s => s.faculty)
+                                            .Include(s => s.StudentEnrollments)
                                             .FirstOrDefaultAsync(s => s.MatricNumber == student.MatricNos.ToUpper());
 
         if(StudentToLogin == null)
@@ -444,12 +451,15 @@ public class StudentManagementService : IStudentManagementService
             return CreateResponse.CreateUnsuccessfulResponse("19", "Error Attempting Login", "Invalid Login Details", $"Incorrect Password provided.");
         }
 
-        await _context.Entry(StudentToLogin)
-                .Reference(s => s.department)
-                .LoadAsync();
+        var token = await _tokenProvider.GenrateToken(student, StudentToLogin.Email);
 
+        var responseData = new
+        {
+            Token = token,
+            StudentDetails = StudentToLogin.ToStudentDetails()
+        };
 
-        return CreateResponse.CreateSuccessfulResponse(await StudentToLogin.ToStudentDetails(), "Login Successfull.");
+        return CreateResponse.CreateSuccessfulResponse(responseData, "Login Successfull.");
     }
 
     public async Task<Response> DeleteStudent(LoginStudentDto loginStudent)
@@ -533,6 +543,11 @@ public class StudentManagementService : IStudentManagementService
 
     public async Task<Response> UpdateEnrollment(UpdateEnrollmentDto ModifiedEnrollment)
     {
+        if (ModifiedEnrollment.Score != 0 && (ModifiedEnrollment.Score < 0 || ModifiedEnrollment.Score > 100))
+        {
+            return CreateResponse.CreateUnsuccessfulResponse("09", "Error Updating Enrollment", "Invalid Enrollment Update Details", $"Enrollment cannot have a score of: {ModifiedEnrollment.Score}");
+        }
+       
         Enrollment ExistingRecord = await _context.Enrollments.FirstOrDefaultAsync(e => e.Id == ModifiedEnrollment.Id);
         if (ExistingRecord == null)
         {
@@ -554,6 +569,15 @@ public class StudentManagementService : IStudentManagementService
         ExistingRecord.StudentId = ModifiedEnrollment.StudentId;
         ExistingRecord.CourseId = ModifiedEnrollment.CourseId;
 
+        if(ModifiedEnrollment.Score != 0)
+        {
+            ExistingRecord.Score = ModifiedEnrollment.Score;
+            ExistingRecord.Grade = ModifiedEnrollment.Score >= 70 ? "A" :
+                                            ModifiedEnrollment.Score >= 60 ? "B" :
+                                            ModifiedEnrollment.Score >= 50 ? "C" :
+                                            ModifiedEnrollment.Score >= 45 ? "D" : "F";
+        }
+
         _context.Enrollments.Update(ExistingRecord);
 
         await _context.SaveChangesAsync();
@@ -572,4 +596,50 @@ public class StudentManagementService : IStudentManagementService
                                         .ToList();
         return CreateResponse.CreateSuccessfulResponse(Enrollments, "Enrollment Details Fetched Successfully.");
     }
+
+    public async Task<Response> UpdateEnrollmentScore(UpdateEnrollmentScoreDto studentEnrollmentScore)
+    {
+        
+       try
+       {
+            var enrollmentRecord = await _context.Enrollments.FirstOrDefaultAsync(e => e.Id == studentEnrollmentScore.EnrollmentId);
+
+            if (enrollmentRecord == null)
+            {
+                return CreateResponse.CreateUnsuccessfulResponse("09", "Error Updating Course", "Invalid Enrollment Details", $"Enrollment with Id: {studentEnrollmentScore.EnrollmentId} does not exist");
+            }
+
+
+            var Grade = studentEnrollmentScore.Score >= 70 ? "A" :
+                                            studentEnrollmentScore.Score >= 60 ? "B" :
+                                            studentEnrollmentScore.Score >= 50 ? "C" :
+                                            studentEnrollmentScore.Score >= 45 ? "D" : "F";
+
+            enrollmentRecord.Score = studentEnrollmentScore.Score;
+            enrollmentRecord.Grade = Grade;
+
+            try
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var updateDbContext = scope.ServiceProvider.GetRequiredService<StudentManagementDbContext>();
+                //_context.Enrollments.Entry(enrollmentRecord).State = EntityState.Modified;
+                updateDbContext.Enrollments.Update(enrollmentRecord);
+
+                await updateDbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                return CreateResponse.CreateUnsuccessfulResponse("99", "Error Updating Database", ex.GetType().FullName, ex.Message);
+            }
+
+
+            return CreateResponse.CreateSuccessfulResponse("Score Updated Successfully", "Score Update Successful.");
+       }
+        
+       catch(Exception ex)
+       {
+            return CreateResponse.CreateUnsuccessfulResponse("99", "Error Updating Score", ex.GetType().FullName, ex.Message);
+        }
+    }
+
 }

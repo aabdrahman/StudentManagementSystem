@@ -1,4 +1,6 @@
-﻿namespace StudentManagementApplication.Contracts.Student;
+﻿using StudentManagementApplication.Contracts.Enrollment;
+
+namespace StudentManagementApplication.Contracts.Student;
 
 public record class StudentDetailsDto
 (
@@ -6,5 +8,6 @@ public record class StudentDetailsDto
     string MatricNumber,
     string Email,
     string Department,
-    string Faculty
+    string Faculty,
+    List<EnrollmentDetailsDto> Enrollments
 );

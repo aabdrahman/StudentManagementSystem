@@ -33,5 +33,7 @@ public class EnrollmentConfig : IEntityTypeConfiguration<Enrollment>
             .HasDefaultValueSql("getdate()");
         builder.Property(x => x.EnrollmentYear)
             .HasDefaultValueSql("datepart(year, getdate())");
+        builder.Property(s => s.Grade)
+            .HasMaxLength(5);
     }
 }
