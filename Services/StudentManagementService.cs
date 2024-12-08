@@ -456,7 +456,7 @@ public class StudentManagementService : IStudentManagementService
         var responseData = new
         {
             Token = token,
-            StudentDetails = StudentToLogin.ToStudentDetails()
+            StudentDetails = await StudentToLogin.ToStudentDetails()
         };
 
         return CreateResponse.CreateSuccessfulResponse(responseData, "Login Successfull.");
